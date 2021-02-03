@@ -32,6 +32,8 @@ const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked }) 
   const userWorthUnit = new BigNumber(userWorth).dividedBy(decimals)
   const intervalWorthUnit = new BigNumber(intervalWorth).dividedBy(decimals)
   const quantityStakedUnit = new BigNumber(quantityStaked).dividedBy(decimals)
+  const userPercentage = new BigNumber(userWorthUnit).dividedBy(intervalWorthUnit).precision(3)
+  const userPercentageUnit = new BigNumber(userPercentage).multipliedBy(100)
 
   return (
     <div className="StakingResult-root">
@@ -46,6 +48,9 @@ const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked }) 
       </div>
       <div className="StakingResult-line">
         - Interval Worth : {parseFloat(intervalWorthUnit)}
+      </div>
+      <div className="StakingResult-line">
+        - Share Percentage : {parseFloat(userPercentageUnit)}%
       </div>
     </div>
   )
