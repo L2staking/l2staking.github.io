@@ -27,13 +27,18 @@ const Loader = (props) => (
   </ContentLoader>
 )
 
-const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked }) => {
+const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked, intervalRewardUSDT, intervalRewardDAI }) => {
   const decimals = new BigNumber(10).exponentiatedBy(18)
+  const decimals8 = new BigNumber(10).exponentiatedBy(8)
   const userWorthUnit = new BigNumber(userWorth).dividedBy(decimals)
   const intervalWorthUnit = new BigNumber(intervalWorth).dividedBy(decimals)
   const quantityStakedUnit = new BigNumber(quantityStaked).dividedBy(decimals)
   const userPercentage = new BigNumber(userWorthUnit).dividedBy(intervalWorthUnit).precision(3)
   const userPercentageUnit = new BigNumber(userPercentage).multipliedBy(100)
+  const intervalRewardUSDTUnit = new BigNumber(intervalRewardUSDT).dividedBy(decimals8)
+  const intervalRewardDAIUnit = new BigNumber(intervalRewardDAI).dividedBy(decimals)
+  const userRewardUSDTUnit = new BigNumber(intervalRewardUSDTUnit).multipliedBy(userPercentage)
+  const userRewardDAIUnit = new BigNumber(intervalRewardDAIUnit).multipliedBy(userPercentage)
 
   return (
     <div className="StakingResult-root">
@@ -50,7 +55,13 @@ const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked }) 
         - Interval Worth : {parseFloat(intervalWorthUnit)}
       </div>
       <div className="StakingResult-line">
+        - Interval Rewards : {parseFloat(intervalRewardUSDTUnit)} USDT & {parseFloat(intervalRewardDAIUnit)} DAI
+      </div>
+      <div className="StakingResult-line">
         - Share Percentage : {parseFloat(userPercentageUnit)}%
+      </div>
+      <div className="StakingResult-line">
+        - Share Rewards : {parseFloat(userRewardUSDTUnit)} USDT & {parseFloat(userRewardDAIUnit)} DAI
       </div>
     </div>
   )
@@ -66,9 +77,13 @@ function App () {
   const [deltaTime, setDeltaTime] = useState(null)
   const [userAddressError, setUserAddressError] = useState(false)
   const [userAddressErrorReason, setUserAddressErrorReason] = useState(null)
+  const [intervalRewardUSDT, setIntervalRewardUSDT] = useState(null)
+  const [intervalRewardDAI, setIntervalRewardDAI] = useState(null)
   const AVERAGE_ETH_BLOCK_TIME_SECONDS = 13
   const STAKING_APP_ID = 1
   const INVALID_INTERVAL_INDEX = 0
+  const REWARD_INDEX_USDT = 2
+  const REWARD_INDEX_DAI = 1
   const web3 = new Web3('https://mainnet.infura.io/v3/211ccd9759dd4ab09c07f884b0712f9c');
   const gluonContractAddress = '0x75ACe7a086eA0FB1a79e43Cc6331Ad053d8C67cB';
   const GluonContract = new web3.eth.Contract(gluonABI, gluonContractAddress);
@@ -100,9 +115,17 @@ function App () {
             const deltaTime = (deltaHeight * AVERAGE_ETH_BLOCK_TIME_SECONDS)
             setDeltaTime(deltaTime)
             console.log("deltaTime=", deltaTime)
-          });
+            });
+            stakingContract.methods.calculateIntervalReward(start, end, REWARD_INDEX_USDT).call().then(({ rewardAmount }) => {
+              setIntervalRewardUSDT(rewardAmount)
+              console.log("rewardUSDT=", rewardAmount)
+              });
+            stakingContract.methods.calculateIntervalReward(start, end, REWARD_INDEX_DAI).call().then(({ rewardAmount }) => {
+              setIntervalRewardDAI(rewardAmount)
+              console.log("rewardDAI=", rewardAmount)
+              });
+          })
         })
-      })
     }
   }, [userAddress])
 
@@ -150,6 +173,8 @@ function App () {
               userWorth={userWorth}
               intervalWorth={intervalWorth}
               quantityStaked={quantityStaked}
+              intervalRewardUSDT={intervalRewardUSDT}
+              intervalRewardDAI={intervalRewardDAI}
             />}
         </div>
       </div>
