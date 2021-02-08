@@ -31,8 +31,8 @@ const Loader = (props) => (
 const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked, intervalRewardUSDT, intervalRewardDAI }) => {
   const decimals = new BigNumber(10).exponentiatedBy(18)
   const decimals6 = new BigNumber(10).exponentiatedBy(6)
-  const userWorthUnit = new BigNumber(userWorth).dividedBy(decimals)
-  const intervalWorthUnit = new BigNumber(intervalWorth).dividedBy(decimals)
+  const userWorthUnit = new BigNumber(userWorth)
+  const intervalWorthUnit = new BigNumber(intervalWorth)
   const quantityStakedUnit = new BigNumber(quantityStaked).dividedBy(decimals)
   const userPercentage = new BigNumber(userWorthUnit).dividedBy(intervalWorthUnit).precision(4)
   const userPercentageUnit = new BigNumber(userPercentage).multipliedBy(100)
