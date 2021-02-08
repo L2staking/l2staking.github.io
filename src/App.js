@@ -53,7 +53,7 @@ const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked, in
         - Interval Rewards : {parseFloat(intervalRewardUSDTUnit).toFixed(2)} USDT & {parseFloat(intervalRewardDAIUnit).toFixed(2)} DAI
       </div>
       <div className="StakingResult-line">
-        - Share Percentage : {parseFloat(userPercentageUnit).toFixed(2)}%
+        - Share Percentage : {parseFloat(userPercentageUnit).toFixed(3)}%
       </div>
       <div className="StakingResult-line">
         - Share Rewards : {parseFloat(userRewardUSDTUnit).toFixed(2)} USDT & {parseFloat(userRewardDAIUnit).toFixed(2)} DAI
