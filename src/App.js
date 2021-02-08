@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Web3 from 'web3'
 import { gluonABI } from './ABI/Gluon'
 import { stakingABI } from './ABI/Staking'
+import { ERC20TransferABI } from './ABI/ERC20Transfer'
 import './App.css'
 import Logo from './assets/leverj.svg';
 import TextField from '@material-ui/core/TextField';
@@ -29,13 +30,13 @@ const Loader = (props) => (
 
 const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked, intervalRewardUSDT, intervalRewardDAI }) => {
   const decimals = new BigNumber(10).exponentiatedBy(18)
-  const decimals8 = new BigNumber(10).exponentiatedBy(8)
+  const decimals6 = new BigNumber(10).exponentiatedBy(6)
   const userWorthUnit = new BigNumber(userWorth).dividedBy(decimals)
   const intervalWorthUnit = new BigNumber(intervalWorth).dividedBy(decimals)
   const quantityStakedUnit = new BigNumber(quantityStaked).dividedBy(decimals)
-  const userPercentage = new BigNumber(userWorthUnit).dividedBy(intervalWorthUnit).precision(3)
+  const userPercentage = new BigNumber(userWorthUnit).dividedBy(intervalWorthUnit).precision(4)
   const userPercentageUnit = new BigNumber(userPercentage).multipliedBy(100)
-  const intervalRewardUSDTUnit = new BigNumber(intervalRewardUSDT).dividedBy(decimals8)
+  const intervalRewardUSDTUnit = new BigNumber(intervalRewardUSDT).dividedBy(decimals6)
   const intervalRewardDAIUnit = new BigNumber(intervalRewardDAI).dividedBy(decimals)
   const userRewardUSDTUnit = new BigNumber(intervalRewardUSDTUnit).multipliedBy(userPercentage)
   const userRewardDAIUnit = new BigNumber(intervalRewardDAIUnit).multipliedBy(userPercentage)
@@ -49,19 +50,13 @@ const StakingResult = ({ deltaTime, userWorth, intervalWorth, quantityStaked, in
         - Countdown before reward : <Countdown date={Date.now() + (deltaTime * 1000)} />
       </div>
       <div className="StakingResult-line">
-        - User Worth : {parseFloat(userWorthUnit)}
+        - Interval Rewards : {parseFloat(intervalRewardUSDTUnit).toFixed(2)} USDT & {parseFloat(intervalRewardDAIUnit).toFixed(2)} DAI
       </div>
       <div className="StakingResult-line">
-        - Interval Worth : {parseFloat(intervalWorthUnit)}
+        - Share Percentage : {parseFloat(userPercentageUnit).toFixed(2)}%
       </div>
       <div className="StakingResult-line">
-        - Interval Rewards : {parseFloat(intervalRewardUSDTUnit)} USDT & {parseFloat(intervalRewardDAIUnit)} DAI
-      </div>
-      <div className="StakingResult-line">
-        - Share Percentage : {parseFloat(userPercentageUnit)}%
-      </div>
-      <div className="StakingResult-line">
-        - Share Rewards : {parseFloat(userRewardUSDTUnit)} USDT & {parseFloat(userRewardDAIUnit)} DAI
+        - Share Rewards : {parseFloat(userRewardUSDTUnit).toFixed(2)} USDT & {parseFloat(userRewardDAIUnit).toFixed(2)} DAI
       </div>
     </div>
   )
@@ -74,6 +69,7 @@ function App () {
   const [intervalWorth, setIntervalWorth] = useState(null)
   const [userAddress, setUserAddress] = useState(null)
   const [stakingContract, setStakingContract] = useState(null)
+  const [stakingAddress, setStakingAddress] = useState(null)
   const [deltaTime, setDeltaTime] = useState(null)
   const [userAddressError, setUserAddressError] = useState(false)
   const [userAddressErrorReason, setUserAddressErrorReason] = useState(null)
@@ -87,12 +83,17 @@ function App () {
   const web3 = new Web3('https://mainnet.infura.io/v3/211ccd9759dd4ab09c07f884b0712f9c');
   const gluonContractAddress = '0x75ACe7a086eA0FB1a79e43Cc6331Ad053d8C67cB';
   const GluonContract = new web3.eth.Contract(gluonABI, gluonContractAddress);
+  const DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f';
+  const DAIContract = new web3.eth.Contract(ERC20TransferABI, DAI_ADDRESS);
+  const USDT_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+  const USDTContract = new web3.eth.Contract(ERC20TransferABI, USDT_ADDRESS);
   const validUserAddress = userAddress && web3.utils.isAddress(userAddress)
   const resultLoading = validUserAddress && !userAddressError && !deltaTime
   const resultReady = validUserAddress && !userAddressError && deltaTime
 
   useEffect(() => {
     GluonContract.methods.app(STAKING_APP_ID).call().then(({ current }) => {
+      setStakingAddress(current)
       const stakingContract = new web3.eth.Contract(stakingABI, current);
       setStakingContract(stakingContract)
     })
@@ -116,16 +117,24 @@ function App () {
             setDeltaTime(deltaTime)
             console.log("deltaTime=", deltaTime)
             });
-            stakingContract.methods.calculateIntervalReward(start, end, REWARD_INDEX_USDT).call().then(({ rewardAmount }) => {
-              setIntervalRewardUSDT(rewardAmount)
-              console.log("rewardUSDT=", rewardAmount)
-              });
-            stakingContract.methods.calculateIntervalReward(start, end, REWARD_INDEX_DAI).call().then(({ rewardAmount }) => {
-              setIntervalRewardDAI(rewardAmount)
-              console.log("rewardDAI=", rewardAmount)
-              });
-          })
+          });
         })
+      DAIContract.methods.balanceOf(stakingAddress).call(function (err, res) {
+        if (err) {
+          console.log("An error occured retrieving DAI Rewards balance", err)
+          return
+        }
+        console.log("DAI Rewards: ", res)
+        setIntervalRewardDAI(res)
+      });
+      USDTContract.methods.balanceOf(stakingAddress).call(function (err, res) {
+        if (err) {
+          console.log("An error occured retrieving USDT Rewards balance", err)
+          return
+        }
+        console.log("USDT Rewards: ", res)
+        setIntervalRewardUSDT(res)
+      });
     }
   }, [userAddress])
 
