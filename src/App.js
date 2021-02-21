@@ -242,7 +242,7 @@ function App () {
             <EqualizerIcon /> Global Stats
           </div>
           <div className="App-content-description">
-            Top level stats about total staked L2 are displayed below
+            Top level stats about total staked L2 are displayed below.
           </div>
 
           {globalStatsReady &&
@@ -262,7 +262,7 @@ function App () {
             <AccountBalanceWalletIcon /> Calculate your stake
           </div>
           <div className="App-content-description">
-            Input your ETH address where you stake your L2 in the field below
+            Input your ETH address where you stake your L2 in the field below.
           </div>
 
           <div className={"App-content-userinfo-textfield"}>
@@ -311,7 +311,11 @@ function App () {
             <MonetizationOnIcon /> Simulator
           </div>
           <div className="App-content-description">
-            Input any amount of L2 and the calculator will display <br /> an estimation of the rewards you'll receive
+            Input any amount of L2 and the calculator will display
+            <br />
+            an estimation of the rewards you'll receive during
+            <br />
+            the next term.
           </div>
 
           <div className={"App-content-calculator-textfield"}>
