@@ -311,11 +311,9 @@ function App () {
             <MonetizationOnIcon /> Simulator
           </div>
           <div className="App-content-description">
-            Input any amount of L2 and the calculator will display
+            Input any amount of L2 and the calculator will display an
             <br />
-            an estimation of the rewards you'll receive during
-            <br />
-            the next term.
+            estimation of the rewards you'll receive during the next term.
           </div>
 
           <div className={"App-content-calculator-textfield"}>
