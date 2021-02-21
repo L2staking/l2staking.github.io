@@ -5,10 +5,16 @@
 
 @include textfield.core-styles;
 
-.App {
+
+/* App */
+
+.App-root {
+  color: white;
   text-align: center;
   background-color: #0c0e23;
   min-height: 100vh;
+  padding-top: 5vh;
+  padding-bottom: 50vh;
 }
 
 .App-logo {
@@ -21,9 +27,8 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: calc(20px + 2vmin);
   color: white;
-  padding-top: 5vh;
 }
 
 .App-header-text {
@@ -34,39 +39,77 @@
   color: #61dafb;
 }
 
+/* App-content */
 .App-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
   width: 80%;
   margin: auto;
-  padding-top: 5vh;
 }
 
 .App-content-result {
-  color: white;
-  text-align: left;
 }
 
-.App-content-address {
-  min-width: calc(250px + 20vw);
+.App-content-userinfo {
+  margin-top: 20px;
 }
 
-.App-content-error {
+.App-content-userinfo-error {
   color: red;
 }
 
-.StakingResult-root {
-  padding-top: 5vh;
+.App-content-header {
+  color: white;
+  font-size: calc(15px + 2vmin);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.App-content-description {
+  color: white;
+  font-size: calc(12px);
+  margin-bottom: 30px;
+}
+
+.App-content-userinfo-textfield {
+  margin-bottom: 30px;
+  min-width: calc(250px + 20vw);
+}
+
+/* StakingResult */
+.StakingResult-root {
+}
+
+.StakingResult-line {
+  font-size: calc(12px + 1vmin);
+}
+
+/* GlobalStats */
+.App-content-global {
+  margin-top: 20px;
+
+}
+
+.GlobalStats-root {
+}
+
+.GlobalStats-line {
+  font-size: calc(12px + 1vmin);
+}
+
+/* Calculator */
+.App-content-calculator {
+  margin-top: 20px;
+}
+
+.App-content-calculator-textfield {
+  margin-bottom: 30px;
+  min-width: calc(10vw);
+}
+
+.Calculator-root {
+}
+
+.Calculator-line {
+  font-size: calc(12px + 1vmin);
 }
