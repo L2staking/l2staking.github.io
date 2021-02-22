@@ -12,10 +12,8 @@ import BigNumber from "bignumber.js";
 import EqualizerIcon from '@material-ui/icons/Equalizer';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import MonetizationOnIcon from '@material-ui/icons/MonetizationOn';
-
-function numberWithCommas (x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
+import Slider from '@material-ui/core/Slider'
+import Input from '@material-ui/core/Input'
 
 const Loader = (props) => (
   <ContentLoader
@@ -77,7 +75,7 @@ const GlobalStats = ({ deltaTime, totalStakedL2, intervalRewardUSDT, intervalRew
         Countdown before reward : <Countdown date={Date.now() + (deltaTime * 1000)} />
       </div>
       <div className="GlobalStats-line">
-        Total staked amount : {numberWithCommas(parseFloat(totalStakedL2Unit).toFixed(0))} L2
+        Total staked amount : {parseFloat(totalStakedL2Unit).toFixed(0)} L2
       </div>
       <div className="GlobalStats-line">
         Current interval rewards : {parseFloat(intervalRewardUSDTUnit).toFixed(2)} USDT & {parseFloat(intervalRewardDAIUnit).toFixed(2)} DAI
@@ -86,7 +84,7 @@ const GlobalStats = ({ deltaTime, totalStakedL2, intervalRewardUSDT, intervalRew
   )
 }
 
-const Calculator = ({ calculatorL2Amount, totalStakedL2, intervalRewardUSDT, intervalRewardDAI }) => {
+const Calculator = ({ calculatorL2Amount, totalStakedL2, intervalRewardUSDT, intervalRewardDAI, exchangeVolume }) => {
 
   const decimals = new BigNumber(10).exponentiatedBy(18)
   const decimals6 = new BigNumber(10).exponentiatedBy(6)
@@ -97,8 +95,13 @@ const Calculator = ({ calculatorL2Amount, totalStakedL2, intervalRewardUSDT, int
   const userPercentageUnit = new BigNumber(userPercentage).multipliedBy(100)
   const intervalRewardUSDTUnit = new BigNumber(intervalRewardUSDT).dividedBy(decimals6)
   const intervalRewardDAIUnit = new BigNumber(intervalRewardDAI).dividedBy(decimals)
-  const userRewardUSDTUnit = new BigNumber(intervalRewardUSDTUnit).multipliedBy(userPercentage)
-  const userRewardDAIUnit = new BigNumber(intervalRewardDAIUnit).multipliedBy(userPercentage)
+  let userRewardUSDTUnit = new BigNumber(intervalRewardUSDTUnit).multipliedBy(userPercentage)
+  let userRewardDAIUnit = new BigNumber(intervalRewardDAIUnit).multipliedBy(userPercentage)
+
+  const curVolume = intervalRewardUSDTUnit.plus(intervalRewardDAIUnit)
+  const ratio = new BigNumber(exchangeVolume).dividedBy(curVolume)
+  userRewardUSDTUnit = userRewardUSDTUnit.multipliedBy(ratio)
+  userRewardDAIUnit = userRewardDAIUnit.multipliedBy(ratio)
 
   return (
     <div className="Calculator-root">
@@ -106,13 +109,44 @@ const Calculator = ({ calculatorL2Amount, totalStakedL2, intervalRewardUSDT, int
         Share Percentage : {parseFloat(userPercentageUnit)}%
       </div>
       <div className="Calculator-line">
-        Share Rewards : {parseFloat(userRewardUSDTUnit).toFixed(2)} USDT & {parseFloat(userRewardDAIUnit).toFixed(2)} DAI
+        Share Rewards ≈ {parseFloat(userRewardUSDTUnit).toFixed(2)} USDT & {parseFloat(userRewardDAIUnit).toFixed(2)} DAI
       </div>
     </div>
   )
 }
 
+function nFormatter (num, digits) {
+  const si = [
+    { value: 1, symbol: '' },
+    { value: 1E3, symbol: 'k' },
+    { value: 1E6, symbol: 'M' },
+    { value: 1E9, symbol: 'G' },
+    { value: 1E12, symbol: 'T' },
+    { value: 1E15, symbol: 'P' },
+    { value: 1E18, symbol: 'E' }
+  ]
+  const rx = /\.0+$|(\.[0-9]*[1-9])0+$/
+  let i
+  for (i = si.length - 1; i > 0; i--) {
+    if (num >= si[i].value) {
+      break
+    }
+  }
+  return (num / si[i].value).toFixed(digits).replace(rx, '$1') + si[i].symbol
+}
+
 function App () {
+
+  // Constants
+  const AVERAGE_ETH_BLOCK_TIME_SECONDS = 13
+  const STAKING_APP_ID = 1
+  const INVALID_INTERVAL_INDEX = 0
+  const gluonContractAddress = '0x75ACe7a086eA0FB1a79e43Cc6331Ad053d8C67cB';
+  const DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f';
+  const USDT_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+  const L2_ADDRESS = '0xbbff34e47e559ef680067a6b1c980639eeb64d24';
+  const MINIMUM_TRADING_VOLUME = 20000
+  const MAXIMUM_TRADING_VOLUME = 25000000
 
   // React states
   const [quantityStaked, setQuantityStaked] = useState(null)
@@ -128,15 +162,7 @@ function App () {
   const [intervalRewardDAI, setIntervalRewardDAI] = useState(null)
   const [totalStakedL2, setTotalStakedL2] = useState(null)
   const [calculatorL2Amount, setCalculatorL2Amount] = useState(null)
-
-  // Constants
-  const AVERAGE_ETH_BLOCK_TIME_SECONDS = 13
-  const STAKING_APP_ID = 1
-  const INVALID_INTERVAL_INDEX = 0
-  const gluonContractAddress = '0x75ACe7a086eA0FB1a79e43Cc6331Ad053d8C67cB';
-  const DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f';
-  const USDT_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7';
-  const L2_ADDRESS = '0xbbff34e47e559ef680067a6b1c980639eeb64d24';
+  const [exchangeVolume, setExchangeVolume] = useState(MINIMUM_TRADING_VOLUME)
 
   // Web3 Contracts
   const web3 = new Web3('https://mainnet.infura.io/v3/211ccd9759dd4ab09c07f884b0712f9c');
@@ -219,15 +245,36 @@ function App () {
     }
   }, [userAddress, stakingContract])
 
+
+  const handleSliderChange = (event, newValue) => {
+    setExchangeVolume(newValue)
+  }
+
+  const handleInputChange = (event) => {
+    let number = Number(event.target.value)
+    if (isNaN(number)) {
+      number = 0
+    }
+    setExchangeVolume(event.target.value === '' ? '' : number)
+  }
+
+  const handleBlur = () => {
+    if (exchangeVolume < 0) {
+      setExchangeVolume(0)
+    } else if (exchangeVolume > MAXIMUM_TRADING_VOLUME) {
+      setExchangeVolume(MAXIMUM_TRADING_VOLUME)
+    }
+  }
+
   return (
     <div className="App-root">
 
       <header className="App-header">
         <div className="App-logo">
-          <img src={Logo} />
+          <img width={100} src={Logo} />
         </div>
         <div className="App-header-text">
-          Leverj Staking Information
+          Leverj Staking <br /> Information
         </div>
       </header>
 
@@ -317,6 +364,35 @@ function App () {
           </div>
 
           <div className={"App-content-calculator-textfield"}>
+
+            <div className={"App-content-calculator-slidertext"}>
+              <div>Leverj Exchange Volume (USD) :</div>
+              <Slider
+                className={"App-content-calculator-slider"}
+                value={exchangeVolume}
+                onChange={handleSliderChange}
+                min={MINIMUM_TRADING_VOLUME}
+                max={MAXIMUM_TRADING_VOLUME}
+                aria-labelledby="range-slider"
+                valueLabelDisplay="no"
+                getAriaValueText={value => <div>{nFormatter(value, 0)}</div>}
+                valueLabelFormat={value => <div>{nFormatter(value, 0)}</div>}
+              />
+              <Input
+                value={exchangeVolume}
+                margin='dense'
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                style={{ height: "30px", width: "150px", marginLeft: "20px", marginTop: "auto" }}
+                inputProps={{
+                  step: 1,
+                  min: 0,
+                  max: MAXIMUM_TRADING_VOLUME,
+                  'aria-labelledby': 'discrete-slider-custom',
+                  style: { textAlign: 'center', height: '30px' }
+                }}
+              />
+            </div>
             <TextField
               focused
               id="L2 Amount"
@@ -344,6 +420,7 @@ function App () {
               totalStakedL2={totalStakedL2}
               intervalRewardUSDT={intervalRewardUSDT}
               intervalRewardDAI={intervalRewardDAI}
+              exchangeVolume={exchangeVolume}
             />
           }
 

@@ -32,7 +32,7 @@
 }
 
 .App-header-text {
-  margin-left: 1vw;
+  margin-left: 30px;
 }
 
 .App-link {
@@ -100,6 +100,8 @@
 /* Calculator */
 .App-content-calculator {
   margin-top: 20px;
+  min-width: calc(50vw);
+  max-width: calc(50vw);
 }
 
 .App-content-calculator-textfield {
@@ -112,4 +114,14 @@
 
 .Calculator-line {
   font-size: calc(12px + 1vmin);
+}
+
+.App-content-calculator-slider {
+  margin-top: 30px;
+  margin-left: 20px;
+}
+
+.App-content-calculator-slidertext {
+  display: flex;
+  flex-direction: row;
 }
