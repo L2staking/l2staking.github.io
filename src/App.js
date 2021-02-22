@@ -227,7 +227,7 @@ function App () {
           <img src={Logo} />
         </div>
         <div className="App-header-text">
-          LeverJ Staking Information
+          Leverj Staking Information
         </div>
       </header>
 
